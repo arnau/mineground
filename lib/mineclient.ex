@@ -3,39 +3,47 @@ defmodule Mineclient do
   Documentation for Mineclient.
   """
 
+  alias Mineclient.Cell
 
-  def parse(board) do
-    ((0..19)
-    |> Enum.map(fn (row_index) ->
-      Enum.map(0..19, fn (column_index) ->
-        cell = get_cell(board, {row_index, column_index})
-
-        cell_to_ascii(cell)
-      end)
+  def to_string(board) do
+    board
+    |> Enum.chunk_by(fn (cell) -> Map.get(cell, "row") end)
+    |> Enum.map(fn (row) ->
+      row
+      |> Enum.map(&Cell.to_string/1)
       |> Enum.join()
     end)
-    |> Enum.join("\n")) <> "\n"
+    |> Enum.join("\n")
+    |> Kernel.<>("\n")
   end
 
+  defmodule Cell do
+    @doc """
+    Returns the string representation of a cell.
 
-  def get_cell(board, {row_index, column_index}) do
-    Enum.find(board, fn (x) ->
-      Map.get(x, "column") == column_index && Map.get(x, "row") == row_index
-    end)
-  end
+        iex> alias Mineclient.Cell
+        ...> Cell.to_string(%{"visible" => false})
+        "*"
 
-
-  def cell_to_ascii(cell) do
-    if Map.get(cell, "visible") do
-      count = Map.get(cell, "neighbourhood_count")
-
-      if count == 0 do
+        iex> alias Mineclient.Cell
+        ...> Cell.to_string(%{"visible" => true, "neighbourhood_count" => 0})
         "."
-      else
-        Integer.to_string(count)
-      end
-    else
-      "*"
+
+        iex> alias Mineclient.Cell
+        ...> Cell.to_string(%{"visible" => true, "neighbourhood_count" => 3})
+        "3"
+
+        iex> alias Mineclient.Cell
+        ...> Cell.to_string(%{"visible" => true, "neighbourhood_count" => 1})
+        "1"
+    """
+    def to_string(cell) do
+      cell
+      |> Map.get("neighbourhood_count")
+      |> (fn (nil) -> "*"
+             (0)   -> "."
+             (x)   -> Integer.to_string(x)
+      end).()
     end
   end
 end
