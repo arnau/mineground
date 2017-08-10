@@ -1,9 +1,9 @@
-defmodule MineclientTest do
+defmodule MinegroundTest do
   use ExUnit.Case
-  alias Mineclient.Board
+  alias Mineground.Board
 
-  doctest Mineclient.Cell
-  doctest Mineclient.Row
+  doctest Mineground.Cell
+  doctest Mineground.Row
 
   test "initial state" do
     raw =
