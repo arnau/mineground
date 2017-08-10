@@ -1,14 +1,16 @@
 defmodule MineclientTest do
   use ExUnit.Case
-  doctest Mineclient
+  alias Mineclient.Board
+
   doctest Mineclient.Cell
+  doctest Mineclient.Row
 
   test "initial state" do
     raw =
       File.read!("test/initial_state.json")
       |> Poison.decode!()
 
-    actual = Mineclient.to_string(raw)
+    actual = Board.to_string(raw)
     expected = """
              ********************
              ********************
@@ -40,7 +42,7 @@ defmodule MineclientTest do
       File.read!("test/move_0_13_state.json")
       |> Poison.decode!()
 
-    actual = Mineclient.to_string(raw)
+    actual = Board.to_string(raw)
     expected = """
             ....................
             ....................
