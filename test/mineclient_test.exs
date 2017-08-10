@@ -36,7 +36,7 @@ defmodule MineclientTest do
 
   test "After {0, 13} move" do
     raw =
-      File.read!("test/initial_state.json")
+      File.read!("test/move_0_13_state.json")
       |> Poison.decode!()
 
     actual = Mineclient.parse(raw)
@@ -64,5 +64,13 @@ defmodule MineclientTest do
             """
 
     assert actual == expected
+  end
+
+  test "query an existing cell" do
+    board =
+      File.read!("test/move_0_13_state.json")
+      |> Poison.decode!()
+
+    assert Mineclient.get_cell(board, {2, 5}) ==  %{"column" => 5, "neighbourhood_count" => 0, "row" => 2, "visible" => true}
   end
 end
