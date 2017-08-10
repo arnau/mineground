@@ -3,18 +3,24 @@ defmodule Mineclient do
   Documentation for Mineclient.
   """
 
-  alias Mineclient.Cell
+  alias Mineclient.Row
 
   def to_string(board) do
     board
     |> Enum.chunk_by(fn (cell) -> Map.get(cell, "row") end)
-    |> Enum.map(fn (row) ->
+    |> Enum.map(&Row.to_string/1)
+    |> Enum.join("\n")
+    |> Kernel.<>("\n")
+  end
+
+  defmodule Row do
+    alias Mineclient.Cell
+
+    def to_string(row) do
       row
       |> Enum.map(&Cell.to_string/1)
       |> Enum.join()
-    end)
-    |> Enum.join("\n")
-    |> Kernel.<>("\n")
+    end
   end
 
   defmodule Cell do
