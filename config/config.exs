@@ -10,7 +10,7 @@ use Mix.Config
 
 # You can configure your application as:
 #
-#     config :mineclient, key: :value
+config(:mineground, [host: "http://localhost:9292"])
 #
 # and access this configuration in your application as:
 #

@@ -7,7 +7,10 @@ defmodule Mineground.Mixfile do
       version: "0.1.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
-      deps: deps()
+      deps: deps(),
+      preferred_cli_env: [
+        vcr: :test, "vcr.delete": :test, "vcr.check": :test, "vcr.show": :test
+      ],
     ]
   end
 
@@ -23,6 +26,7 @@ defmodule Mineground.Mixfile do
     [
       {:httpoison, "~> 0.13.0"},
       {:poison, "~> 3.1.0"},
+      {:exvcr, "~> 0.8", only: :test},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
     ]
   end
