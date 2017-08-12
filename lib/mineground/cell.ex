@@ -1,4 +1,18 @@
 defmodule Mineground.Cell do
+
+  defstruct [row: 0, column: 0, neighbourhood_count: 0, visible: true]
+  @type t :: %__MODULE__{row: integer,
+                         column: integer,
+                         neighbourhood_count: integer,
+                         visible: boolean}
+
+  def empty(row, column) do
+    %__MODULE__{row: row,
+                column: column,
+                neighbourhood_count: nil,
+                visible: false}
+  end
+
   @doc """
   Returns the string representation of a cell.
 

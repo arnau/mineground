@@ -1,14 +1,7 @@
 defmodule Mineground.BoardTest do
   use ExUnit.Case
-  use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   alias Mineground.Board
-
-  test "move once" do
-    use_cassette "board move 0 0" do
-      assert Board.move(0, 0)
-    end
-  end
 
   test "initial state" do
     raw =
