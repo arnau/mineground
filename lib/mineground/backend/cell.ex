@@ -29,33 +29,6 @@ defmodule Mineground.Backend.Cell do
     %__MODULE__{is_bomb: true}
   end
 
-  @doc """
-  Translates from {index, size} to 2d coordinate.
-
-      iex> alias Mineground.Backend.Cell
-      ...> Cell.to_coord(0, 3)
-      {0, 0}
-
-      iex> alias Mineground.Backend.Cell
-      ...> Cell.to_coord(3, 3)
-      {1, 0}
-
-      iex> alias Mineground.Backend.Cell
-      ...> Cell.to_coord(7, 3)
-      {2, 1}
-
-      iex> alias Mineground.Backend.Cell
-      ...> Cell.to_coord(8, 3)
-      {2, 2}
-
-      iex> alias Mineground.Backend.Cell
-      ...> Enum.map(0..3, &Cell.to_coord(&1, 2))
-      [{0, 0}, {0, 1}, {1, 0}, {1, 1}]
-  """
-  def to_coord(index, size) do
-    {div(index, size), rem(index, size)}
-  end
-
   def unseal(cell) do
     Map.put(cell, :is_visible, true)
   end

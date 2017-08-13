@@ -1,6 +1,10 @@
 defmodule Mineground.Backend.Field do
   alias Mineground.Backend.Cell
 
+  @type index :: non_neg_integer
+  @type coord :: {non_neg_integer, non_neg_integer}
+  @type dimensions :: {non_neg_integer, non_neg_integer}
+
   @doc """
       iex> alias Mineground.Backend.Field
       ...> alias Mineground.Backend.Cell
@@ -12,18 +16,61 @@ defmodule Mineground.Backend.Field do
       9
   """
   def make({n, m}, density) when density < (n * m) and n == m do
-    bombs = List.duplicate(%Cell{is_bomb: true}, density)
-    cells = List.duplicate(%Cell{is_bomb: false}, (n * m) - density)
+    bombs = List.duplicate(Cell.make(:bomb), density)
+    cells = List.duplicate(Cell.make(:empty), (n * m) - density)
 
     (bombs ++ cells)
   end
 
-  def start(dimensions = {n, _}, density) do
+  def start(dimensions, density) do
     make(dimensions, density)
     |> Enum.shuffle()
     |> Enum.with_index()
-    |> Map.new(fn ({cell, index}) -> {Cell.to_coord(index, n), cell} end)
+    |> Map.new(fn ({cell, index}) -> {to_coord(index, dimensions), cell} end)
     |> count_bombs()
+  end
+
+  @doc """
+  Translates from {index, size} to 2d coordinate.
+
+      iex> alias Mineground.Backend.Field
+      ...> Field.to_coord(0, {3, 3})
+      {0, 0}
+
+      iex> alias Mineground.Backend.Field
+      ...> Field.to_coord(3, {3, 3})
+      {1, 0}
+
+      iex> alias Mineground.Backend.Field
+      ...> Field.to_coord(7, {3, 3})
+      {2, 1}
+
+      iex> alias Mineground.Backend.Field
+      ...> Field.to_coord(8, {3, 3})
+      {2, 2}
+
+      iex> alias Mineground.Backend.Field
+      ...> Enum.map(0..3, &Field.to_coord(&1, {2, 2}))
+      [{0, 0}, {0, 1}, {1, 0}, {1, 1}]
+
+      iex> alias Mineground.Backend.Field
+      ...> Enum.map(0..11, &Field.to_coord(&1, {4, 3}))
+      [{0, 0}, {0, 1}, {0, 2}, {0, 3},
+       {1, 0}, {1, 1}, {1, 2}, {1, 3},
+       {2, 0}, {2, 1}, {2, 2}, {2, 3}]
+
+      iex> alias Mineground.Backend.Field
+      ...> Enum.map(0..11, &Field.to_coord(&1, {2, 6}))
+      [{0, 0}, {0, 1},
+       {1, 0}, {1, 1},
+       {2, 0}, {2, 1},
+       {3, 0}, {3, 1},
+       {4, 0}, {4, 1},
+       {5, 0}, {5, 1}]
+  """
+  @spec to_coord(index, dimensions) :: coord
+  def to_coord(index, {n, _}) do
+    {div(index, n), rem(index, n)}
   end
 
   @doc """
