@@ -1,4 +1,13 @@
 defmodule Mineground.Backend.Field do
+  @moduledoc """
+  Represents a minefield of dimension {n, m} and x amount of bombs.
+
+  # Example
+
+      field = Field.make({3, 3}, 2)
+      Field.unseal({1, 2})
+  """
+
   alias Mineground.Backend.Cell
 
   @type index :: non_neg_integer
@@ -27,6 +36,29 @@ defmodule Mineground.Backend.Field do
     |> Enum.with_index()
     |> Map.new(fn ({cell, index}) -> {to_coord(index, dimensions), cell} end)
     |> count_bombs()
+  end
+
+  @doc """
+      iex> alias Mineground.Backend.Field
+      ...> alias Mineground.Backend.Cell
+      ...> Field.unseal(%{{0, 0} => Cell.make(:empty)}, {0, 0})
+      %{{0, 0} => %Mineground.Backend.Cell{is_bomb: false, is_visible: true}}
+  """
+  @spec unseal(t, coord) :: t
+  def unseal(grid, coord = {_x, _y}) do
+    cell = Cell.unseal(Map.get(grid, coord))
+    grid = update(grid, coord, cell)
+
+    if Cell.is_bomb(cell) || Cell.has_neighbours(cell) do
+      grid
+    else
+      unseal_neighbours(grid, coord)
+    end
+  end
+
+  @spec update(t, coord, Cell.t) :: t
+  def update(grid, coord, cell) do
+    Map.put(grid, coord, cell)
   end
 
   @doc """
@@ -111,34 +143,13 @@ defmodule Mineground.Backend.Field do
     |> Map.new()
   end
 
-  @spec update(t, coord, Cell.t) :: t
-  def update(grid, coord, cell) do
-    Map.put(grid, coord, cell)
-  end
-
-  @doc """
-      iex> alias Mineground.Backend.Field
-      ...> alias Mineground.Backend.Cell
-      ...> Field.unseal(%{{0, 0} => Cell.make(:empty)}, {0, 0})
-      %{{0, 0} => %Mineground.Backend.Cell{is_bomb: false, is_visible: true}}
-  """
-  @spec unseal(t, coord) :: t
-  def unseal(grid, coord = {_x, _y}) do
-    cell = Cell.unseal(Map.get(grid, coord))
-    grid = update(grid, coord, cell)
-
-    if Cell.is_bomb(cell) || Cell.has_neighbours(cell) do
-      grid
-    else
-      unseal_neighbours(grid, coord)
-    end
-  end
-
   @doc """
   Recursively unseals all unsealable neighbours given an initial coordinate.
   """
+  @spec unseal_neighbours(t, coord) :: t
   def unseal_neighbours(grid, coord) do
-    cells = neighbour_coords(coord)
+    cells = coord
+    |> neighbour_coords()
     |> Enum.map(fn (coord) -> {coord, Map.get(grid, coord)} end)
     |> Enum.filter(fn ({_, cell}) -> cell && Cell.is_unsealable(cell) end)
     |> Enum.map(fn ({coord, cell}) -> {coord, Cell.unseal(cell)} end)
@@ -157,8 +168,10 @@ defmodule Mineground.Backend.Field do
       ...> Field.count_bombs_for_coord(grid, {1, 1})
       1
   """
+  @spec count_bombs_for_coord(t, coord) :: non_neg_integer
   def count_bombs_for_coord(grid, coord) do
-    neighbour_coords(coord)
+    coord
+    |> neighbour_coords()
     |> Enum.reduce(0, fn (coord, sum) ->
       cell = Map.get(grid, coord)
       if cell && Cell.is_bomb(cell) do
@@ -169,7 +182,7 @@ defmodule Mineground.Backend.Field do
     end)
   end
 
-  def neighbour_coords({x, y}) do
+  defp neighbour_coords({x, y}) do
     [{x - 1, y - 1}, {x - 1, y}, {x - 1, y + 1},
      {x    , y - 1},             {x    , y + 1},
      {x + 1, y - 1}, {x + 1, y}, {x + 1, y + 1}]

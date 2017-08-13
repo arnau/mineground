@@ -29,17 +29,23 @@ defmodule Mineground.Backend.Cell do
     %__MODULE__{is_bomb: true}
   end
 
+  @spec unseal(t) :: t
   def unseal(cell) do
     Map.put(cell, :is_visible, true)
   end
 
+  @spec is_bomb(t) :: boolean
   def is_bomb(%__MODULE__{is_bomb: value}), do: value
+
+  @spec is_visible(t) :: boolean
   def is_visible(%__MODULE__{is_visible: value}), do: value
 
+  @spec is_unsealable(t) :: boolean
   def is_unsealable(%__MODULE__{is_bomb: is_bomb, is_visible: is_visible}) do
     !is_bomb && !is_visible
   end
 
+  @spec has_neighbours(t) :: boolean
   def has_neighbours(%__MODULE__{neighbourhood_count: count}) do
     count > 0
   end
