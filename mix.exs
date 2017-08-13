@@ -8,6 +8,7 @@ defmodule Mineground.Mixfile do
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
       deps: deps(),
+      aliases: aliases(),
       preferred_cli_env: [
         vcr: :test, "vcr.delete": :test, "vcr.check": :test, "vcr.show": :test
       ],
@@ -27,7 +28,13 @@ defmodule Mineground.Mixfile do
       {:httpoison, "~> 0.13.0"},
       {:poison, "~> 3.1.0"},
       {:exvcr, "~> 0.8", only: :test},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
+      {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+      {:ex_doc, "~> 0.16", only: [:dev], runtime: false},
     ]
+  end
+
+  defp aliases do
+    [check: ["credo --strict", "dialyzer"]]
   end
 end

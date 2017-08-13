@@ -4,6 +4,7 @@ defmodule Mineground.Backend.Field do
   @type index :: non_neg_integer
   @type coord :: {non_neg_integer, non_neg_integer}
   @type dimensions :: {non_neg_integer, non_neg_integer}
+  @type t :: %{required(coord) => Cell.t}
 
   @doc """
       iex> alias Mineground.Backend.Field
@@ -85,6 +86,7 @@ defmodule Mineground.Backend.Field do
         {1, 0} => %Mineground.Backend.Cell{is_bomb: false, is_visible: false, neighbourhood_count: 1},
         {1, 1} => %Mineground.Backend.Cell{is_bomb: false, is_visible: false, neighbourhood_count: 1}}
   """
+  @spec count_bombs(t) :: t
   def count_bombs(grid) do
     grid
     |> Enum.map(fn ({coord, cell}) ->
@@ -93,6 +95,7 @@ defmodule Mineground.Backend.Field do
     |> Map.new()
   end
 
+  @spec update(t, coord, Cell.t) :: t
   def update(grid, coord, cell) do
     Map.put(grid, coord, cell)
   end
@@ -103,6 +106,7 @@ defmodule Mineground.Backend.Field do
       ...> Field.unseal(%{{0, 0} => Cell.make(:empty)}, {0, 0})
       %{{0, 0} => %Mineground.Backend.Cell{is_bomb: false, is_visible: true}}
   """
+  @spec unseal(t, coord) :: t
   def unseal(grid, coord = {_x, _y}) do
     cell = Cell.unseal(Map.get(grid, coord))
     grid = update(grid, coord, cell)
