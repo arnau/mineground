@@ -11,9 +11,12 @@ defmodule MinegroundTest do
   alias Mineground.Backend.Cell
 
   test "unseal_neighbours all" do
-    grid = Field.start({4, 4}, 0)
+    actual = {4, 4}
+    |> Field.make(0)
+    |> Field.unseal_neighbours({1, 1})
+    |> Enum.map(fn {c, _} -> c end)
 
-    assert Field.unseal_neighbours(grid, {1, 1}) |> Enum.map(fn {c, _} -> c end) == [
+    assert actual == [
       {{0, 0}, %Cell{is_bomb: false, is_visible: true, neighbourhood_count: 0}},
       {{0, 1}, %Cell{is_bomb: false, is_visible: true, neighbourhood_count: 0}},
       {{0, 2}, %Cell{is_bomb: false, is_visible: true, neighbourhood_count: 0}},
@@ -34,9 +37,12 @@ defmodule MinegroundTest do
   end
 
   test "unseal_neighbours all 5x5" do
-    grid = Field.start({5, 5}, 0)
+    actual = {5, 5}
+    |> Field.make(0)
+    |> Field.unseal_neighbours({1, 1})
+    |> Map.to_list()
 
-    assert Field.unseal_neighbours(grid, {1, 1}) |> Map.to_list() == [
+    assert actual == [
       {{0, 0}, %Cell{is_bomb: false, is_visible: true, neighbourhood_count: 0}},
       {{0, 1}, %Cell{is_bomb: false, is_visible: true, neighbourhood_count: 0}},
       {{0, 2}, %Cell{is_bomb: false, is_visible: true, neighbourhood_count: 0}},
@@ -66,10 +72,11 @@ defmodule MinegroundTest do
   end
 
   test "unseal_neighbours {20x20, 2}" do
-    grid = Field.start({20, 20}, 2)
+    actual = {20, 20}
+    |> Field.make(2)
+    |> Field.unseal_neighbours({1, 1})
+    |> Enum.filter(fn ({_, %{is_visible: visible}}) -> visible end)
 
-    assert Field.unseal_neighbours(grid, {1, 1})
-           |> Enum.filter(fn ({_, %{is_visible: visible}}) -> visible end)
-           |> length == 398
+    assert actual |> length == 398
   end
 end

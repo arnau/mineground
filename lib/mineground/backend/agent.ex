@@ -3,7 +3,7 @@ defmodule Mineground.Backend.Agent do
 
   @doc false
   def start_link(dimensions \\ {20, 20}, density \\ 10)  do
-    Agent.start_link(fn -> Field.start(dimensions, density) end, name: __MODULE__)
+    Agent.start_link(fn -> Field.make(dimensions, density) end, name: __MODULE__)
   end
 
   def get do

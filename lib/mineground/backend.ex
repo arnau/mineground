@@ -6,29 +6,45 @@ defmodule Mineground.Backend.Field do
   @type dimensions :: {non_neg_integer, non_neg_integer}
   @type t :: %{required(coord) => Cell.t}
 
+
   @doc """
+  Creates a new minefield of {n, m} with an x amount of bombs.
+
       iex> alias Mineground.Backend.Field
       ...> alias Mineground.Backend.Cell
-      ...> Field.make({3, 3}, 2) |> Enum.filter(&Cell.is_bomb/1) |> length
+      ...> Field.make_base({3, 3}, 2) |> Enum.filter(&Cell.is_bomb/1) |> length
       2
 
       iex> alias Mineground.Backend.Field
-      ...> Field.make({3, 3}, 2) |> length
+      ...> Field.make_base({3, 3}, 2) |> length
       9
   """
-  def make({n, m}, density) when density < (n * m) and n == m do
-    bombs = List.duplicate(Cell.make(:bomb), density)
-    cells = List.duplicate(Cell.make(:empty), (n * m) - density)
-
-    (bombs ++ cells)
-  end
-
-  def start(dimensions, density) do
-    make(dimensions, density)
+  @spec make(dimensions, non_neg_integer) :: t
+  def make(dimensions, density) do
+    dimensions
+    |> make_base(density)
     |> Enum.shuffle()
     |> Enum.with_index()
     |> Map.new(fn ({cell, index}) -> {to_coord(index, dimensions), cell} end)
     |> count_bombs()
+  end
+
+  @doc """
+      iex> alias Mineground.Backend.Field
+      ...> alias Mineground.Backend.Cell
+      ...> Field.make_base({3, 3}, 2) |> Enum.filter(&Cell.is_bomb/1) |> length
+      2
+
+      iex> alias Mineground.Backend.Field
+      ...> Field.make_base({3, 3}, 2) |> length
+      9
+  """
+  @spec make_base(dimensions, non_neg_integer) :: list(Cell.t)
+  def make_base({n, m}, density) when density < (n * m) and n == m do
+    bombs = List.duplicate(Cell.make(:bomb), density)
+    cells = List.duplicate(Cell.make(:empty), (n * m) - density)
+
+    (bombs ++ cells)
   end
 
   @doc """
