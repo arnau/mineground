@@ -4,10 +4,12 @@ defmodule Mineground.Backend.Field do
 
   # Example
 
-      field = Field.make({3, 3}, 2)
-      Field.unseal({1, 2})
+      {:ok, field} = Field.make({3, 3}, 2)
+      Field.unseal(field, {1, 2})
   """
 
+  alias Lonely.Result
+  alias Mineground.Error
   alias Mineground.Backend.Cell
 
   @type index :: non_neg_integer
@@ -18,41 +20,56 @@ defmodule Mineground.Backend.Field do
 
   @doc """
   Creates a new minefield of {n, m} with an x amount of bombs.
-
       iex> alias Mineground.Backend.Field
       ...> alias Mineground.Backend.Cell
-      ...> Field.make_base({3, 3}, 2) |> Enum.filter(&Cell.is_bomb/1) |> length
-      2
+      ...> Field.make({3, 3}, 10) |> Tuple.delete_at(1)
+      {:error}
 
       iex> alias Mineground.Backend.Field
-      ...> Field.make_base({3, 3}, 2) |> length
+      ...> {:ok, field} = Field.make({3, 3}, 2)
+      ...> field |> Map.to_list() |> length()
       9
   """
   @spec make(dimensions, non_neg_integer) :: t
+  def make({n, m}, density) when density > (n * m), do:
+    {:error, Error.make("The amount of bombs exceeds the field capacity")}
+
   def make(dimensions, density) do
-    dimensions
-    |> make_base(density)
-    |> Enum.shuffle()
-    |> Enum.with_index()
-    |> Map.new(fn ({cell, index}) -> {to_coord(index, dimensions), cell} end)
-    |> count_bombs()
+    {:ok, dimensions
+          |> make_base(density)
+          |> Enum.shuffle()
+          |> Enum.with_index()
+          |> Map.new(fn ({cell, index}) ->
+              {Result.unwrap(to_coord(index, dimensions)), cell}
+             end)
+          |> count_bombs()}
   end
 
   @doc """
       iex> alias Mineground.Backend.Field
       ...> alias Mineground.Backend.Cell
       ...> Field.unseal(%{{0, 0} => Cell.make(:empty)}, {0, 0})
-      %{{0, 0} => %Mineground.Backend.Cell{is_bomb: false, is_visible: true}}
+      {:ok,
+       %{{0, 0} => %Mineground.Backend.Cell{is_bomb: false, is_visible: true}}}
+
+      iex> alias Mineground.Backend.Field
+      ...> alias Mineground.Backend.Cell
+      ...> Field.unseal(%{{0, 0} => Cell.make(:bomb)}, {0, 0})
+      {:error,
+       %{{0, 0} => %Mineground.Backend.Cell{is_bomb: true, is_visible: true}}}
   """
   @spec unseal(t, coord) :: t
   def unseal(grid, coord = {_x, _y}) do
     cell = Cell.unseal(Map.get(grid, coord))
     grid = update(grid, coord, cell)
 
-    if Cell.is_bomb(cell) || Cell.has_neighbours(cell) do
-      grid
-    else
-      unseal_neighbours(grid, coord)
+    case cell do
+      %{is_bomb: true} ->
+        {:error, grid}
+      %{neighbourhood_count: count} when count > 0 ->
+        {:ok, grid}
+      _ ->
+        {:ok, unseal_neighbours(grid, coord)}
     end
   end
 
@@ -72,7 +89,7 @@ defmodule Mineground.Backend.Field do
       9
   """
   @spec make_base(dimensions, non_neg_integer) :: list(Cell.t)
-  def make_base({n, m}, density) when density < (n * m) and n == m do
+  def make_base({n, m}, density) do
     bombs = List.duplicate(Cell.make(:bomb), density)
     cells = List.duplicate(Cell.make(:empty), (n * m) - density)
 
@@ -84,42 +101,48 @@ defmodule Mineground.Backend.Field do
 
       iex> alias Mineground.Backend.Field
       ...> Field.to_coord(0, {3, 3})
-      {0, 0}
+      {:ok, {0, 0}}
+
+      iex> alias Mineground.Backend.Field
+      ...> Field.to_coord(10, {3, 3})
+      {:error, %{errors: [%{reason: "Index out of bounds"}]}}
 
       iex> alias Mineground.Backend.Field
       ...> Field.to_coord(3, {3, 3})
-      {1, 0}
+      {:ok, {1, 0}}
 
       iex> alias Mineground.Backend.Field
       ...> Field.to_coord(7, {3, 3})
-      {2, 1}
+      {:ok, {2, 1}}
 
       iex> alias Mineground.Backend.Field
-      ...> Field.to_coord(8, {3, 3})
-      {2, 2}
+      ...> alias Lonely.Result
+      ...> Enum.map(0..3, &Field.to_coord(&1, {2, 2})) |> Result.List.combine()
+      {:ok, [{0, 0}, {0, 1}, {1, 0}, {1, 1}]}
 
       iex> alias Mineground.Backend.Field
-      ...> Enum.map(0..3, &Field.to_coord(&1, {2, 2}))
-      [{0, 0}, {0, 1}, {1, 0}, {1, 1}]
+      ...> alias Lonely.Result
+      ...> Enum.map(0..11, &Field.to_coord(&1, {4, 3})) |> Result.List.combine()
+      {:ok, [{0, 0}, {0, 1}, {0, 2}, {0, 3},
+             {1, 0}, {1, 1}, {1, 2}, {1, 3},
+             {2, 0}, {2, 1}, {2, 2}, {2, 3}]}
 
       iex> alias Mineground.Backend.Field
-      ...> Enum.map(0..11, &Field.to_coord(&1, {4, 3}))
-      [{0, 0}, {0, 1}, {0, 2}, {0, 3},
-       {1, 0}, {1, 1}, {1, 2}, {1, 3},
-       {2, 0}, {2, 1}, {2, 2}, {2, 3}]
-
-      iex> alias Mineground.Backend.Field
-      ...> Enum.map(0..11, &Field.to_coord(&1, {2, 6}))
-      [{0, 0}, {0, 1},
-       {1, 0}, {1, 1},
-       {2, 0}, {2, 1},
-       {3, 0}, {3, 1},
-       {4, 0}, {4, 1},
-       {5, 0}, {5, 1}]
+      ...> alias Lonely.Result
+      ...> Enum.map(0..11, &Field.to_coord(&1, {2, 6})) |> Result.List.combine()
+      {:ok, [{0, 0}, {0, 1},
+             {1, 0}, {1, 1},
+             {2, 0}, {2, 1},
+             {3, 0}, {3, 1},
+             {4, 0}, {4, 1},
+             {5, 0}, {5, 1}]}
   """
-  @spec to_coord(index, dimensions) :: coord
+  @spec to_coord(index, dimensions) :: {:ok, coord} | {:error, Error.t}
+  def to_coord(index, {n, m}) when index >= (n * m), do:
+    {:error, Error.make("Index out of bounds")}
+
   def to_coord(index, {n, _}) do
-    {div(index, n), rem(index, n)}
+    {:ok, {div(index, n), rem(index, n)}}
   end
 
   @doc """
@@ -172,14 +195,16 @@ defmodule Mineground.Backend.Field do
   def count_bombs_for_coord(grid, coord) do
     coord
     |> neighbour_coords()
-    |> Enum.reduce(0, fn (coord, sum) ->
+    |> Enum.reduce(0, bomb_reducer(grid))
+  end
+
+  defp bomb_reducer(grid) do
+    fn (coord, sum) ->
       cell = Map.get(grid, coord)
-      if cell && Cell.is_bomb(cell) do
-        sum + 1
-      else
-        sum
-      end
-    end)
+      if cell && Cell.is_bomb(cell),
+      do: sum + 1,
+      else: sum
+    end
   end
 
   defp neighbour_coords({x, y}) do

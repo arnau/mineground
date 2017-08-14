@@ -11,8 +11,9 @@ defmodule MinegroundTest do
   alias Mineground.Backend.Cell
 
   test "unseal_neighbours all" do
-    actual = {4, 4}
-    |> Field.make(0)
+    {:ok, field} = Field.make({4, 4}, 0)
+
+    actual = field
     |> Field.unseal_neighbours({1, 1})
     |> Enum.map(fn {c, _} -> c end)
 
@@ -37,8 +38,9 @@ defmodule MinegroundTest do
   end
 
   test "unseal_neighbours all 5x5" do
-    actual = {5, 5}
-    |> Field.make(0)
+    {:ok, field} = Field.make({5, 5}, 0)
+
+    actual = field
     |> Field.unseal_neighbours({1, 1})
     |> Map.to_list()
 
@@ -72,8 +74,9 @@ defmodule MinegroundTest do
   end
 
   test "unseal_neighbours {20x20, 2}" do
-    actual = {20, 20}
-    |> Field.make(2)
+    {:ok, field} = Field.make({20, 20}, 2)
+
+    actual = field
     |> Field.unseal_neighbours({1, 1})
     |> Enum.filter(fn ({_, %{is_visible: visible}}) -> visible end)
 
