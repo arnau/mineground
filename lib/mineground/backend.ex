@@ -60,16 +60,17 @@ defmodule Mineground.Backend.Field do
   """
   @spec unseal(t, coord) :: t
   def unseal(grid, coord = {_x, _y}) do
-    cell = Cell.unseal(Map.get(grid, coord))
-    grid = update(grid, coord, cell)
+    with {:ok, cell} <- Cell.unseal(Map.get(grid, coord)) do
+      grid = update(grid, coord, cell)
 
-    case cell do
-      %{is_bomb: true} ->
-        {:error, grid}
-      %{neighbourhood_count: count} when count > 0 ->
+      if Cell.has_neighbours(cell) do
         {:ok, grid}
-      _ ->
+      else
         {:ok, unseal_neighbours(grid, coord)}
+      end
+    else
+      {:error, cell} ->
+        {:error, update(grid, coord, cell)}
     end
   end
 
@@ -175,7 +176,7 @@ defmodule Mineground.Backend.Field do
     |> neighbour_coords()
     |> Enum.map(fn (coord) -> {coord, Map.get(grid, coord)} end)
     |> Enum.filter(fn ({_, cell}) -> cell && Cell.is_unsealable(cell) end)
-    |> Enum.map(fn ({coord, cell}) -> {coord, Cell.unseal(cell)} end)
+    |> Enum.map(fn ({coord, cell}) -> {coord, Result.unwrap(Cell.unseal(cell))} end)
 
     Enum.reduce(cells, Map.merge(grid, Map.new(cells)), fn ({coord, _}, acc) ->
       unseal_neighbours(acc, coord)

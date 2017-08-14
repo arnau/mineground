@@ -29,9 +29,22 @@ defmodule Mineground.Backend.Cell do
     %__MODULE__{is_bomb: true}
   end
 
+  @doc """
+  Unseals a cell. Returns an error if the cell contains a bomb.
+
+      iex> alias Mineground.Backend.Cell
+      ...> alias Lonely.Result
+      ...> bomb = Cell.make(:bomb)
+      ...> Cell.unseal(bomb) |> Result.is_error()
+      true
+  """
   @spec unseal(t) :: t
+  def unseal(cell = %__MODULE__{is_bomb: true}) do
+    {:error, Map.put(cell, :is_visible, true)}
+  end
+
   def unseal(cell) do
-    Map.put(cell, :is_visible, true)
+    {:ok, Map.put(cell, :is_visible, true)}
   end
 
   @spec is_bomb(t) :: boolean
