@@ -1,9 +1,16 @@
-defmodule Mineground.Backend.Agent do
+defmodule Mineground.Backend.Worker do
+  @moduledoc false
+
+  use Agent
   alias Mineground.Backend.Field
 
   @doc false
-  def start_link(dimensions \\ {20, 20}, density \\ 10)  do
-    Agent.start_link(fn -> Field.make(dimensions, density) end, name: __MODULE__)
+  def start_link(opts)  do
+    Agent.start_link(fn -> Field.make(opts[:dimensions], opts[:density]) end, name: __MODULE__)
+  end
+
+  def stop do
+    Agent.stop(__MODULE__)
   end
 
   def get do
@@ -11,6 +18,9 @@ defmodule Mineground.Backend.Agent do
   end
 
   def update(coord) do
-    Agent.update(__MODULE__, &Field.unseal(&1, coord))
+    Agent.update(__MODULE__, fn
+      ({:ok, state}) -> Field.unseal(state, coord)
+      (res) -> res
+    end)
   end
 end

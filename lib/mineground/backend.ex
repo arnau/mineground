@@ -81,6 +81,25 @@ defmodule Mineground.Backend.Field do
 
   @doc """
       iex> alias Mineground.Backend.Field
+      ...> {:ok, field} = Field.make({2, 2}, 0)
+      ...> Field.to_list(field)
+      [%{row: 0, column: 0, is_bomb: false, is_visible: false, neighbourhood_count: 0},
+       %{row: 0, column: 1, is_bomb: false, is_visible: false, neighbourhood_count: 0},
+       %{row: 1, column: 0, is_bomb: false, is_visible: false, neighbourhood_count: 0},
+       %{row: 1, column: 1, is_bomb: false, is_visible: false, neighbourhood_count: 0}]
+  """
+  @spec to_list(t) :: list(map())
+  def to_list(field) do
+    field
+    |> Enum.map(fn ({{x, y}, cell}) ->
+      cell
+      |> Map.from_struct()
+      |> Map.merge(%{row: x, column: y})
+    end)
+  end
+
+  @doc """
+      iex> alias Mineground.Backend.Field
       ...> alias Mineground.Backend.Cell
       ...> Field.make_base({3, 3}, 2) |> Enum.filter(&Cell.is_bomb/1) |> length
       2
